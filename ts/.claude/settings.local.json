@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git mv:*)",
+      "Bash(mv src/UniversalSDK.ts src/UniversalSDK.ts && mv src/UniversalError.ts src/UniversalError.ts)",
+      "Bash(find /Users/richard/Projects/voxgig/udk/ts -maxdepth 1 -name \"*.ts\" -o -name \"*.js\" | grep -E \"\\(^|/\\)index\\\\.\\(ts|js\\)$\" | head -5)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(find /Users/richard/Projects/voxgig-sdk/voxgig-solardemo-sdk/ts/src -name \"*.ts\" 2>/dev/null | head -20)",
+      "Bash(find /Users/richard/Projects/voxgig-sdk/voxgig-solardemo-sdk/app -type f -name \"*.ts\" -o -name \"*.js\" -o -name \"*.json\" 2>/dev/null | head -20)",
+      "Bash(curl -s http://localhost:8901/api/planet | head -c 200)",
+      "Bash(curl -s http://localhost:8901/api/planet/mars/moon | head -c 200)",
+      "Bash(UNIVERSAL_TEST_LIVE=TRUE UNIVERSAL_TEST_MOON_ENTID='{\"planet01\":\"mars\"}' npm test 2>&1)",
+      "Bash(curl -s http://localhost:8901/api/planet/mars | head -c 200)",
+      "Bash(curl -s http://localhost:8901/api/planet/mars/moon/phobos | head -c 200)",
+      "Bash(UNIVERSAL_TEST_LIVE=TRUE UNIVERSAL_TEST_MOON_ENTID='{\"planet01\":\"mars\",\"moon01\":\"phobos\"}' UNIVERSAL_TEST_PLANET_ENTID='{\"planet01\":\"mars\"}' npm test 2>&1)",
+      "Bash(UNIVERSAL_TEST_LIVE=TRUE UNIVERSAL_TEST_MOON_ENTID='{\"planet01\":\"mars\"}' npm test 2>&1 | grep -E '\\(✔|✖|pass|fail\\)')",
+      "Bash(UNIVERSAL_TEST_LIVE=TRUE UNIVERSAL_TEST_MOON_ENTID='{\"planet01\":\"mars\"}' npm test 2>&1 | grep -E '\\(✔|✖|pass|fail|ℹ\\)')",
+      "Bash(UNIVERSAL_TEST_LIVE=TRUE UNIVERSAL_TEST_ENTID='{\"planet01\":\"mars\"}' npm test 2>&1 | grep -E '\\(✔|✖|ℹ \\(tests|pass|fail\\)\\)')"
+    ]
+  }
+}

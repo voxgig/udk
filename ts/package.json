@@ -1,0 +1,26 @@
+{
+  "name": "@voxgig-sdk/universal",
+  "version": "0.0.1",
+  "description": "DESCRIPTION",
+  "main": "dist/UniversalManager.js",
+  "type": "commonjs",
+  "types": "dist/UniversalManager.d.ts",
+  "scripts": {
+    "test": "node --enable-source-maps --test 'dist-test/**/*.test.js'",
+    "test-some": "node --enable-source-maps --experimental-test-isolation=none --test-name-pattern=\"$TEST_PATTERN\" --test 'dist-test/**/*.test.js'",
+    "test-utility": "node --enable-source-maps --test test/utility/*.test.ts",
+    "watch": "tsc --build src test -w",
+    "build": "tsc --build src test",
+    "clean": "rm -rf node_modules yarn.lock package-lock.json dist dist-test",
+    "reset": "npm run clean && npm i && npm run build && npm test"
+  },
+  "author": "Universal",
+  "license": "MIT",
+  "dependencies": {},
+  "peerDependencies": {},
+  "devDependencies": {
+    "dotenv": "^17.3.1",
+    "typescript": "^5.9.3",
+    "@types/node": "^25.3.3"
+  }
+}
