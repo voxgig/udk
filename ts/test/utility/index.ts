@@ -11,6 +11,8 @@ const SDK = um.make('voxgig-solardemo')
 
 
 export {
+  um,
+  UniversalSDK,
   SDK,
   TEST_JSON_FILE,
 }

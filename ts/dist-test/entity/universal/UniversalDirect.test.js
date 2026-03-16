@@ -38,7 +38,7 @@ const utility_1 = require("../../utility");
                     const loadPath = (loadTarget.parts || []).join('/');
                     const loadParams = loadTarget.args?.params || [];
                     if (live) {
-                        const idmap = resolveIdmap(um, sdk, entityName, entityMap);
+                        const idmap = await resolveIdmap(um, sdk, entityName, entityMap);
                         const setup = directSetup(um, sdk);
                         // First list to discover a real entity ID.
                         if (hasList) {
@@ -46,33 +46,42 @@ const utility_1 = require("../../utility");
                             if (null != listTarget) {
                                 const listPath = (listTarget.parts || []).join('/');
                                 const listParams = listTarget.args?.params || [];
-                                const lparams = {};
-                                for (const p of listParams) {
-                                    const ref = p.name.replace(/_id$/, '') + '01';
-                                    lparams[p.name] = idmap[ref] || ref;
+                                // Try multiple parent refs to find one with child entities.
+                                let found = null;
+                                let lparams = {};
+                                for (let t = 0; t < 3 && null == found; t++) {
+                                    lparams = {};
+                                    for (const p of listParams) {
+                                        const ref = p.name.replace(/_id$/, '') +
+                                            String(t).padStart(2, '0');
+                                        lparams[p.name] = idmap[ref] || ref;
+                                    }
+                                    const listResult = await setup.client.direct({
+                                        path: listPath,
+                                        method: 'GET',
+                                        params: lparams,
+                                    });
+                                    (0, node_assert_1.default)(listResult.ok === true);
+                                    (0, node_assert_1.default)(Array.isArray(listResult.data));
+                                    if (listResult.data.length >= 1) {
+                                        found = listResult.data[0];
+                                    }
                                 }
-                                const listResult = await setup.client.direct({
-                                    path: listPath,
-                                    method: 'GET',
-                                    params: lparams,
-                                });
-                                (0, node_assert_1.default)(listResult.ok === true);
-                                (0, node_assert_1.default)(Array.isArray(listResult.data));
-                                (0, node_assert_1.default)(listResult.data.length >= 1);
-                                const found = listResult.data[0];
-                                const params = {};
-                                for (const p of loadParams) {
-                                    params[p.name] = found[p.name] || lparams[p.name];
+                                if (null != found) {
+                                    const params = {};
+                                    for (const p of loadParams) {
+                                        params[p.name] = found[p.name] || lparams[p.name];
+                                    }
+                                    const result = await setup.client.direct({
+                                        path: loadPath,
+                                        method: 'GET',
+                                        params,
+                                    });
+                                    (0, node_assert_1.default)(result.ok === true);
+                                    (0, node_assert_1.default)(result.status === 200);
+                                    (0, node_assert_1.default)(null != result.data);
+                                    (0, node_assert_1.default)(result.data.id === found.id);
                                 }
-                                const result = await setup.client.direct({
-                                    path: loadPath,
-                                    method: 'GET',
-                                    params,
-                                });
-                                (0, node_assert_1.default)(result.ok === true);
-                                (0, node_assert_1.default)(result.status === 200);
-                                (0, node_assert_1.default)(null != result.data);
-                                (0, node_assert_1.default)(result.data.id === found.id);
                             }
                         }
                     }
@@ -109,22 +118,34 @@ const utility_1 = require("../../utility");
                     const listPath = (listTarget.parts || []).join('/');
                     const listParams = listTarget.args?.params || [];
                     if (live) {
-                        const idmap = resolveIdmap(um, sdk, entityName, entityMap);
-                        const params = {};
-                        for (const p of listParams) {
-                            const ref = (p.name === 'id' ? entityName : p.name.replace(/_id$/, '')) + '01';
-                            params[p.name] = idmap[ref] || ref;
-                        }
+                        const idmap = await resolveIdmap(um, sdk, entityName, entityMap);
                         const setup = directSetup(um, sdk);
-                        const result = await setup.client.direct({
-                            path: listPath,
-                            method: 'GET',
-                            params,
-                        });
-                        (0, node_assert_1.default)(result.ok === true);
-                        (0, node_assert_1.default)(result.status === 200);
-                        (0, node_assert_1.default)(Array.isArray(result.data));
-                        (0, node_assert_1.default)(result.data.length >= 1);
+                        // For entities with parent params, try each known parent
+                        // to find one that has child entities.
+                        let found = false;
+                        const maxTries = listParams.length > 0 ? 3 : 1;
+                        for (let t = 0; t < maxTries && !found; t++) {
+                            const params = {};
+                            for (const p of listParams) {
+                                const base = (p.name === 'id' ? entityName : p.name.replace(/_id$/, ''));
+                                const ref = base + String(t).padStart(2, '0');
+                                params[p.name] = idmap[ref] || ref;
+                            }
+                            const result = await setup.client.direct({
+                                path: listPath,
+                                method: 'GET',
+                                params,
+                            });
+                            (0, node_assert_1.default)(result.ok === true);
+                            (0, node_assert_1.default)(result.status === 200);
+                            (0, node_assert_1.default)(Array.isArray(result.data));
+                            if (result.data.length >= 1) {
+                                found = true;
+                            }
+                        }
+                        if (listParams.length === 0) {
+                            (0, node_assert_1.default)(found, 'expected at least one entity in list');
+                        }
                     }
                     else {
                         const setup = directSetup(um, sdk, [{ id: 'direct01' }, { id: 'direct02' }]);
@@ -153,7 +174,7 @@ const utility_1 = require("../../utility");
         }
     });
 });
-function resolveIdmap(um, sdk, entityName, entityMap) {
+async function resolveIdmap(um, sdk, entityName, entityMap) {
     const clientStruct = sdk.utility().struct;
     const items = clientStruct.items;
     const transform = clientStruct.transform;
@@ -174,7 +195,38 @@ function resolveIdmap(um, sdk, entityName, entityMap) {
         'UNIVERSAL_TEST_ENTID': idmap,
         'UNIVERSAL_TEST_LIVE': 'FALSE',
     });
-    return env['UNIVERSAL_TEST_ENTID'];
+    idmap = env['UNIVERSAL_TEST_ENTID'];
+    // In live mode, discover real parent entity IDs by listing parent entities.
+    if ('TRUE' === process.env.UNIVERSAL_TEST_LIVE) {
+        const liveClient = new __1.UniversalSDK(um, {
+            ref: 'voxgig-solardemo',
+            model: sdk._options.model,
+        });
+        const discoveries = [];
+        items(entityMap, (item) => {
+            const eDef = item[1];
+            const eName = eDef.name;
+            const listOp = eDef.op?.list;
+            const listTarget = listOp?.targets?.[0];
+            if (null == listTarget)
+                return;
+            const listParams = listTarget.args?.params || [];
+            if (listParams.length > 0)
+                return; // skip nested entities in discovery
+            const listPath = (listTarget.parts || []).join('/');
+            discoveries.push((async () => {
+                const res = await liveClient.direct({ path: listPath, method: 'GET', params: {} });
+                if (res.ok && Array.isArray(res.data)) {
+                    for (let i = 0; i < Math.min(res.data.length, 3); i++) {
+                        const ref = `${eName}${String(i).padStart(2, '0')}`;
+                        idmap[ref] = res.data[i].id;
+                    }
+                }
+            })());
+        });
+        await Promise.all(discoveries);
+    }
+    return idmap;
 }
 function directSetup(um, sdk, mockres) {
     const live = 'TRUE' === process.env.UNIVERSAL_TEST_LIVE;

@@ -28,7 +28,7 @@ const utility_1 = require("../../utility");
         const entityDef = item[1];
         const entityName = entityDef.name;
         (0, node_test_1.test)('basic-' + entityName, async () => {
-            const setup = basicSetup(um, entityMap, entityName);
+            const setup = await basicSetup(um, entityMap, entityName);
             const client = setup.client;
             const struct = setup.struct;
             const ops = entityDef.op || {};
@@ -198,7 +198,7 @@ function makeEntityTestFields(fields, start, entdata) {
         num++;
     }
 }
-function basicSetup(um, entityMap, entityName, extra) {
+async function basicSetup(um, entityMap, entityName, extra) {
     const options = {};
     const allExisting = {};
     const allNew = {};
@@ -244,6 +244,26 @@ function basicSetup(um, entityMap, entityName, extra) {
             apikey: env.UNIVERSAL_APIKEY,
         };
         client = new __1.UniversalSDK(um, null != extra ? merge([liveopts, extra]) : liveopts);
+        // Discover real parent entity IDs from the live API.
+        for (const item of Object.values(entityMap)) {
+            const eDef = item;
+            const eName = eDef.name;
+            const listOp = eDef.op?.list;
+            const listTarget = listOp?.targets?.[0];
+            if (null == listTarget)
+                continue;
+            const listParams = listTarget.args?.params || [];
+            if (listParams.length > 0)
+                continue; // skip nested entities
+            const listPath = (listTarget.parts || []).join('/');
+            const res = await client.direct({ path: listPath, method: 'GET', params: {} });
+            if (res.ok && Array.isArray(res.data)) {
+                for (let i = 0; i < Math.min(res.data.length, 3); i++) {
+                    const ref = `${eName}${String(i).padStart(2, '0')}`;
+                    idmap[ref] = res.data[i].id;
+                }
+            }
+        }
     }
     const setup = {
         idmap,

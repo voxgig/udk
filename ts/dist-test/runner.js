@@ -94,7 +94,7 @@ function checkResult(entry, args, res, structUtils) {
     let matched = false;
     if (entry.err) {
         return (0, node_assert_1.fail)('Expected error did not occur: ' + entry.err +
-            '\n\nENTRY: ' + JSON.stringify(entry, null, 2));
+            '\n\nENTRY: ' + safeStringify(entry));
     }
     if (entry.match) {
         const result = { in: entry.in, args, out: entry.res, ctx: entry.ctx };
@@ -109,7 +109,7 @@ function checkResult(entry, args, res, structUtils) {
     if (matched && (NULLMARK === out || null == out)) {
         return;
     }
-    (0, node_assert_1.deepStrictEqual)(null != res ? JSON.parse(JSON.stringify(res)) : res, entry.out);
+    (0, node_assert_1.deepStrictEqual)(null != res ? JSON.parse(safeStringify(res)) : res, entry.out);
 }
 // Handle errors from test execution
 function handleError(entry, err, structUtils) {
@@ -127,10 +127,10 @@ function handleError(entry, err, structUtils) {
     }
     // Unexpected error (test didn't specify an error expectation)
     else if (err instanceof node_assert_1.AssertionError) {
-        (0, node_assert_1.fail)(err.message + '\n\nENTRY: ' + JSON.stringify(entry, null, 2));
+        (0, node_assert_1.fail)(err.message + '\n\nENTRY: ' + safeStringify(entry));
     }
     else {
-        (0, node_assert_1.fail)(err.stack + '\\nnENTRY: ' + JSON.stringify(entry, null, 2));
+        (0, node_assert_1.fail)(err.stack + '\n\nENTRY: ' + safeStringify(entry));
     }
 }
 function resolveArgs(entry, testpack, utility, structUtils) {
@@ -215,10 +215,25 @@ function matchval(check, base, structUtils) {
     }
     return pass;
 }
+function safeStringify(val) {
+    const seen = new WeakSet();
+    return JSON.stringify(val, (_k, v) => {
+        if ('object' === typeof v && null !== v) {
+            if (seen.has(v))
+                return '[Circular]';
+            seen.add(v);
+        }
+        if (v instanceof Error) {
+            return { name: v.name, message: v.message };
+        }
+        return v;
+    }, 2);
+}
 function fixJSON(val, flags) {
     if (null == val) {
         return flags?.null ? NULLMARK : val;
     }
+    const seen = new WeakSet();
     const replacer = (_k, v) => {
         if (null == v && flags?.null) {
             return NULLMARK;
@@ -229,6 +244,11 @@ function fixJSON(val, flags) {
                 name: v.name,
                 message: v.message,
             };
+        }
+        if ('object' === typeof v && null !== v) {
+            if (seen.has(v))
+                return '[Circular]';
+            seen.add(v);
         }
         return v;
     };

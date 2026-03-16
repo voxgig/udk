@@ -53,7 +53,7 @@ describe('UniversalDirect', async () => {
           const loadParams = loadTarget.args?.params || []
 
           if (live) {
-            const idmap = resolveIdmap(um, sdk, entityName, entityMap)
+            const idmap = await resolveIdmap(um, sdk, entityName, entityMap)
             const setup = directSetup(um, sdk)
 
             // First list to discover a real entity ID.
@@ -63,39 +63,48 @@ describe('UniversalDirect', async () => {
                 const listPath = (listTarget.parts || []).join('/')
                 const listParams = listTarget.args?.params || []
 
-                const lparams: any = {}
-                for (const p of listParams) {
-                  const ref = p.name.replace(/_id$/, '') + '01'
-                  lparams[p.name] = idmap[ref] || ref
+                // Try multiple parent refs to find one with child entities.
+                let found: any = null
+                let lparams: any = {}
+                for (let t = 0; t < 3 && null == found; t++) {
+                  lparams = {}
+                  for (const p of listParams) {
+                    const ref = p.name.replace(/_id$/, '') +
+                      String(t).padStart(2, '0')
+                    lparams[p.name] = idmap[ref] || ref
+                  }
+
+                  const listResult: any = await setup.client.direct({
+                    path: listPath,
+                    method: 'GET',
+                    params: lparams,
+                  })
+
+                  assert(listResult.ok === true)
+                  assert(Array.isArray(listResult.data))
+
+                  if (listResult.data.length >= 1) {
+                    found = listResult.data[0]
+                  }
                 }
 
-                const listResult: any = await setup.client.direct({
-                  path: listPath,
-                  method: 'GET',
-                  params: lparams,
-                })
+                if (null != found) {
+                  const params: any = {}
+                  for (const p of loadParams) {
+                    params[p.name] = found[p.name] || lparams[p.name]
+                  }
 
-                assert(listResult.ok === true)
-                assert(Array.isArray(listResult.data))
-                assert(listResult.data.length >= 1)
+                  const result: any = await setup.client.direct({
+                    path: loadPath,
+                    method: 'GET',
+                    params,
+                  })
 
-                const found = listResult.data[0]
-
-                const params: any = {}
-                for (const p of loadParams) {
-                  params[p.name] = found[p.name] || lparams[p.name]
+                  assert(result.ok === true)
+                  assert(result.status === 200)
+                  assert(null != result.data)
+                  assert(result.data.id === found.id)
                 }
-
-                const result: any = await setup.client.direct({
-                  path: loadPath,
-                  method: 'GET',
-                  params,
-                })
-
-                assert(result.ok === true)
-                assert(result.status === 200)
-                assert(null != result.data)
-                assert(result.data.id === found.id)
               }
             }
           }
@@ -140,25 +149,39 @@ describe('UniversalDirect', async () => {
           const listParams = listTarget.args?.params || []
 
           if (live) {
-            const idmap = resolveIdmap(um, sdk, entityName, entityMap)
+            const idmap = await resolveIdmap(um, sdk, entityName, entityMap)
+            const setup = directSetup(um, sdk)
 
-            const params: any = {}
-            for (const p of listParams) {
-              const ref = (p.name === 'id' ? entityName : p.name.replace(/_id$/, '')) + '01'
-              params[p.name] = idmap[ref] || ref
+            // For entities with parent params, try each known parent
+            // to find one that has child entities.
+            let found = false
+            const maxTries = listParams.length > 0 ? 3 : 1
+            for (let t = 0; t < maxTries && !found; t++) {
+              const params: any = {}
+              for (const p of listParams) {
+                const base = (p.name === 'id' ? entityName : p.name.replace(/_id$/, ''))
+                const ref = base + String(t).padStart(2, '0')
+                params[p.name] = idmap[ref] || ref
+              }
+
+              const result: any = await setup.client.direct({
+                path: listPath,
+                method: 'GET',
+                params,
+              })
+
+              assert(result.ok === true)
+              assert(result.status === 200)
+              assert(Array.isArray(result.data))
+
+              if (result.data.length >= 1) {
+                found = true
+              }
             }
 
-            const setup = directSetup(um, sdk)
-            const result: any = await setup.client.direct({
-              path: listPath,
-              method: 'GET',
-              params,
-            })
-
-            assert(result.ok === true)
-            assert(result.status === 200)
-            assert(Array.isArray(result.data))
-            assert(result.data.length >= 1)
+            if (listParams.length === 0) {
+              assert(found, 'expected at least one entity in list')
+            }
           }
           else {
             const setup = directSetup(um, sdk, [{ id: 'direct01' }, { id: 'direct02' }])
@@ -196,7 +219,7 @@ describe('UniversalDirect', async () => {
 
 
 
-function resolveIdmap(um: any, sdk: any, entityName: string, entityMap: any): any {
+async function resolveIdmap(um: any, sdk: any, entityName: string, entityMap: any): Promise<any> {
   const clientStruct = sdk.utility().struct
   const items = clientStruct.items
   const transform = clientStruct.transform
@@ -223,7 +246,42 @@ function resolveIdmap(um: any, sdk: any, entityName: string, entityMap: any): an
     'UNIVERSAL_TEST_LIVE': 'FALSE',
   })
 
-  return env['UNIVERSAL_TEST_ENTID']
+  idmap = env['UNIVERSAL_TEST_ENTID']
+
+  // In live mode, discover real parent entity IDs by listing parent entities.
+  if ('TRUE' === process.env.UNIVERSAL_TEST_LIVE) {
+    const liveClient = new UniversalSDK(um, {
+      ref: 'voxgig-solardemo',
+      model: sdk._options.model,
+    })
+
+    const discoveries: Promise<void>[] = []
+    items(entityMap, (item: any[]) => {
+      const eDef = item[1]
+      const eName = eDef.name
+      const listOp = eDef.op?.list
+      const listTarget = listOp?.targets?.[0]
+      if (null == listTarget) return
+
+      const listParams = listTarget.args?.params || []
+      if (listParams.length > 0) return // skip nested entities in discovery
+
+      const listPath = (listTarget.parts || []).join('/')
+      discoveries.push((async () => {
+        const res: any = await liveClient.direct({ path: listPath, method: 'GET', params: {} })
+        if (res.ok && Array.isArray(res.data)) {
+          for (let i = 0; i < Math.min(res.data.length, 3); i++) {
+            const ref = `${eName}${String(i).padStart(2, '0')}`
+            idmap[ref] = res.data[i].id
+          }
+        }
+      })())
+    })
+
+    await Promise.all(discoveries)
+  }
+
+  return idmap
 }
 
 

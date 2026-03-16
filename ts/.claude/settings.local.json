@@ -16,7 +16,19 @@
       "Bash(UNIVERSAL_TEST_LIVE=TRUE UNIVERSAL_TEST_MOON_ENTID='{\"planet01\":\"mars\",\"moon01\":\"phobos\"}' UNIVERSAL_TEST_PLANET_ENTID='{\"planet01\":\"mars\"}' npm test 2>&1)",
       "Bash(UNIVERSAL_TEST_LIVE=TRUE UNIVERSAL_TEST_MOON_ENTID='{\"planet01\":\"mars\"}' npm test 2>&1 | grep -E '\\(✔|✖|pass|fail\\)')",
       "Bash(UNIVERSAL_TEST_LIVE=TRUE UNIVERSAL_TEST_MOON_ENTID='{\"planet01\":\"mars\"}' npm test 2>&1 | grep -E '\\(✔|✖|pass|fail|ℹ\\)')",
-      "Bash(UNIVERSAL_TEST_LIVE=TRUE UNIVERSAL_TEST_ENTID='{\"planet01\":\"mars\"}' npm test 2>&1 | grep -E '\\(✔|✖|ℹ \\(tests|pass|fail\\)\\)')"
+      "Bash(UNIVERSAL_TEST_LIVE=TRUE UNIVERSAL_TEST_ENTID='{\"planet01\":\"mars\"}' npm test 2>&1 | grep -E '\\(✔|✖|ℹ \\(tests|pass|fail\\)\\)')",
+      "Bash(ls:*)",
+      "Bash(cp:*)",
+      "Bash(cd:*)",
+      "Bash(go test:*)",
+      "Bash(go build:*)",
+      "Bash(python3:*)",
+      "Bash(find:*)",
+      "Bash(node:*)",
+      "Bash(wc:*)",
+      "Bash(mkdir:*)",
+      "Bash(curl:*)",
+      "Bash(UNIVERSAL_TEST_LIVE=TRUE UNIVERSAL_APIKEY=NONE npm test 2>&1)"
     ]
   }
 }
