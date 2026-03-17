@@ -5,6 +5,7 @@ import (
 
 	sdk "voxgiguniversalsdk"
 
+	jsonic "github.com/jsonicjs/jsonic/go"
 	vs "github.com/voxgig/struct"
 )
 
@@ -31,34 +32,23 @@ func TestUniversalManagerModelMap(t *testing.T) {
 		t.Fatal("UniversalManager should not be nil")
 	}
 
-	// Provide the API model inline as a map.
-	model := map[string]any{
-		"main": map[string]any{
-			"kit": map[string]any{
-				"entity": map[string]any{
-					"foo": map[string]any{
-						"name":   "foo",
-						"active": true,
-						"fields": []any{
-							map[string]any{"name": "id", "type": "`$STRING`", "active": true},
-							map[string]any{"name": "title", "type": "`$STRING`", "active": true},
-						},
-						"op": map[string]any{
-							"list": map[string]any{
-								"name": "list",
-								"targets": []any{
-									map[string]any{
-										"method": "GET",
-										"parts":  []any{"foo"},
-										"active": true,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+	// Provide the API model inline using jsonic syntax.
+	model, merr := jsonic.Parse(`
+		main: kit: entity: foo: {
+			name: foo
+			active: true
+			fields: [
+				{name: id, type: '$STRING', active: true}
+				{name: title, type: '$STRING', active: true}
+			]
+			op: list: {
+				name: list
+				targets: [{method: GET, parts: [foo], active: true}]
+			}
+		}
+	`)
+	if merr != nil {
+		t.Fatalf("jsonic.Parse failed: %v", merr)
 	}
 
 	udk := um.Make("custom-api", map[string]any{"model": model})
@@ -80,17 +70,12 @@ func TestUniversalManagerModelMapOverridesRegistry(t *testing.T) {
 		"registry": "./registry",
 	})
 
-	customModel := map[string]any{
-		"main": map[string]any{
-			"kit": map[string]any{
-				"entity": map[string]any{
-					"bar": map[string]any{
-						"name":   "bar",
-						"active": true,
-					},
-				},
-			},
-		},
+	// Use jsonic to define the custom model inline.
+	customModel, merr := jsonic.Parse(`
+		main: kit: entity: bar: {name: bar, active: true}
+	`)
+	if merr != nil {
+		t.Fatalf("jsonic.Parse failed: %v", merr)
 	}
 
 	udk := um.Make("voxgig-solardemo", map[string]any{"model": customModel})
