@@ -1,6 +1,8 @@
 package core
 
 import (
+	"sort"
+
 	vs "github.com/voxgig/struct"
 )
 
@@ -229,6 +231,62 @@ func (sdk *UniversalSDK) Direct(fetchargs map[string]any) (map[string]any, error
 	}
 
 	return map[string]any{"ok": false, "err": ctx.MakeError("direct_invalid", "invalid response type")}, nil
+}
+
+func (sdk *UniversalSDK) Model() map[string]any {
+	model := ToMapAny(sdk.initopts["model"])
+	if model == nil {
+		return map[string]any{}
+	}
+	return model
+}
+
+func (sdk *UniversalSDK) EntityModel(name string) map[string]any {
+	ent := ToMapAny(vs.GetPath([]any{"main", "kit", "entity", name}, sdk.Model()))
+	if ent == nil {
+		return map[string]any{}
+	}
+	return ent
+}
+
+func (sdk *UniversalSDK) Describe(opts map[string]any) map[string]any {
+	what, _ := opts["what"].(string)
+
+	if what == "entity" {
+		entName, _ := opts["entity"].(string)
+		entDef := sdk.EntityModel(entName)
+		name, _ := entDef["name"].(string)
+
+		fields := []any{}
+		if flist, ok := entDef["fields"].([]any); ok {
+			fields = flist
+		}
+
+		return map[string]any{
+			"name":   name,
+			"fields": fields,
+		}
+	}
+
+	// Default: what == "api"
+	model := sdk.Model()
+	info := ToMapAny(vs.GetPath([]any{"main", "kit", "info"}, model))
+	if info == nil {
+		info = map[string]any{}
+	}
+
+	entityMap := ToMapAny(vs.GetPath([]any{"main", "kit", "entity"}, model))
+	names := make([]string, 0, len(entityMap))
+	for k := range entityMap {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+
+	return map[string]any{
+		"name":     model["name"],
+		"info":     info,
+		"entities": names,
+	}
 }
 
 func (sdk *UniversalSDK) Entity(name string, entopts map[string]any) UniversalEntity {
