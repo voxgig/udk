@@ -22,12 +22,23 @@ func (um *UniversalManager) Options() map[string]any {
 	return um.options
 }
 
-func (um *UniversalManager) Make(ref string) *UniversalSDK {
-	model := um.ResolveModel(ref)
+func (um *UniversalManager) Make(ref string, opts ...map[string]any) *UniversalSDK {
 	sdkopts := map[string]any{
-		"ref":   ref,
-		"model": model,
+		"ref": ref,
 	}
+
+	// Merge caller-supplied options (including an optional "model" key).
+	for _, o := range opts {
+		for k, v := range o {
+			sdkopts[k] = v
+		}
+	}
+
+	// Only resolve from registry when no model was provided.
+	if sdkopts["model"] == nil {
+		sdkopts["model"] = um.ResolveModel(ref)
+	}
+
 	return NewUniversalSDK(um, sdkopts)
 }
 
