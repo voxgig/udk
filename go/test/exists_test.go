@@ -3,10 +3,10 @@ package test
 import (
 	"testing"
 
-	sdk "voxgiguniversalsdk"
+	sdk "github.com/voxgig/udk/go"
 
 	jsonic "github.com/jsonicjs/jsonic/go"
-	vs "github.com/voxgig/struct"
+	vs "github.com/voxgig/struct/go"
 )
 
 func TestUniversalManagerExists(t *testing.T) {

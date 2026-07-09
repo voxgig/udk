@@ -1,6 +1,6 @@
 package utility
 
-import "voxgiguniversalsdk/core"
+import "github.com/voxgig/udk/go/core"
 
 func doneUtil(ctx *core.Context) (any, error) {
 	if ctx.Ctrl.Explain != nil {

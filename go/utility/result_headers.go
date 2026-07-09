@@ -1,6 +1,6 @@
 package utility
 
-import "voxgiguniversalsdk/core"
+import "github.com/voxgig/udk/go/core"
 
 func resultHeadersUtil(ctx *core.Context) *core.Result {
 	response := ctx.Response

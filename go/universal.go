@@ -1,10 +1,10 @@
 package voxgiguniversalsdk
 
 import (
-	"voxgiguniversalsdk/core"
-	"voxgiguniversalsdk/entity"
-	"voxgiguniversalsdk/feature"
-	_ "voxgiguniversalsdk/utility"
+	"github.com/voxgig/udk/go/core"
+	"github.com/voxgig/udk/go/entity"
+	"github.com/voxgig/udk/go/feature"
+	_ "github.com/voxgig/udk/go/utility"
 )
 
 // Type aliases preserve external API.

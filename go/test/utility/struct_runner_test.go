@@ -6,7 +6,7 @@ package utility
 import (
 	"fmt"
 
-	voxgigstruct "github.com/voxgig/struct"
+	voxgigstruct "github.com/voxgig/struct/go"
 
 	"encoding/json"
 	"errors"

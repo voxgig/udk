@@ -1,7 +1,7 @@
 package feature
 
 import (
-	"voxgiguniversalsdk/core"
+	"github.com/voxgig/udk/go/core"
 )
 
 type BaseFeature struct {

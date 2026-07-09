@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"strconv"
 
-	vs "github.com/voxgig/struct"
+	vs "github.com/voxgig/struct/go"
 )
 
 type Context struct {

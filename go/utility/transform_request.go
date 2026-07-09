@@ -1,9 +1,9 @@
 package utility
 
 import (
-	vs "github.com/voxgig/struct"
+	vs "github.com/voxgig/struct/go"
 
-	"voxgiguniversalsdk/core"
+	"github.com/voxgig/udk/go/core"
 )
 
 func transformRequestUtil(ctx *core.Context) any {

@@ -3,9 +3,9 @@ package utility
 import (
 	"regexp"
 
-	vs "github.com/voxgig/struct"
+	vs "github.com/voxgig/struct/go"
 
-	"voxgiguniversalsdk/core"
+	"github.com/voxgig/udk/go/core"
 )
 
 func makeUrlUtil(ctx *core.Context) (string, error) {

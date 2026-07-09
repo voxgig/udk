@@ -1,6 +1,6 @@
 package utility
 
-import "voxgiguniversalsdk/core"
+import "github.com/voxgig/udk/go/core"
 
 func prepareMethodUtil(ctx *core.Context) string {
 	opname := ctx.Op.Name

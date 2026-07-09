@@ -1,6 +1,6 @@
 package utility
 
-import "voxgiguniversalsdk/core"
+import "github.com/voxgig/udk/go/core"
 
 func featureAddUtil(ctx *core.Context, f core.Feature) {
 	client := ctx.Client

@@ -3,7 +3,7 @@ package core
 import (
 	"sort"
 
-	vs "github.com/voxgig/struct"
+	vs "github.com/voxgig/struct/go"
 )
 
 type UniversalSDK struct {

@@ -1,6 +1,6 @@
 package utility
 
-import "voxgiguniversalsdk/core"
+import "github.com/voxgig/udk/go/core"
 
 func makeResultUtil(ctx *core.Context) (*core.Result, error) {
 	if ctx.Out["result"] != nil {

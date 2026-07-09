@@ -3,9 +3,9 @@ package utility
 import (
 	"strings"
 
-	vs "github.com/voxgig/struct"
+	vs "github.com/voxgig/struct/go"
 
-	"voxgiguniversalsdk/core"
+	"github.com/voxgig/udk/go/core"
 )
 
 func makeTargetUtil(ctx *core.Context) (map[string]any, error) {

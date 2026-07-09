@@ -1,9 +1,9 @@
 package entity
 
 import (
-	"voxgiguniversalsdk/core"
+	"github.com/voxgig/udk/go/core"
 
-	vs "github.com/voxgig/struct"
+	vs "github.com/voxgig/struct/go"
 )
 
 type UniversalEntityImpl struct {

@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	sdk "voxgiguniversalsdk"
-	"voxgiguniversalsdk/core"
+	sdk "github.com/voxgig/udk/go"
+	"github.com/voxgig/udk/go/core"
 
-	vs "github.com/voxgig/struct"
+	vs "github.com/voxgig/struct/go"
 )
 
 func TestUniversalEntity(t *testing.T) {
