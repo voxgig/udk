@@ -1,7 +1,3 @@
-// Vendored from github.com/voxgig/struct/go/voxgigstruct_test.go
-// RUN: go test
-// RUN-SOME: go test -v -run=TestStructUtility/getpath
-
 package utility
 
 import (
@@ -58,11 +54,11 @@ func TestStructUtility(t *testing.T) {
 			"getelem": voxgigstruct.GetElem,
 			"getprop": voxgigstruct.GetProp,
 
-			"getpath":  voxgigstruct.GetPath,
-			"haskey":   voxgigstruct.HasKey,
-			"inject":   voxgigstruct.Inject,
-			"isempty":  voxgigstruct.IsEmpty,
-			"isfunc":   voxgigstruct.IsFunc,
+			"getpath": voxgigstruct.GetPath,
+			"haskey":  voxgigstruct.HasKey,
+			"inject":  voxgigstruct.Inject,
+			"isempty": voxgigstruct.IsEmpty,
+			"isfunc":  voxgigstruct.IsFunc,
 
 			"iskey":  voxgigstruct.IsKey,
 			"islist": voxgigstruct.IsList,
@@ -70,18 +66,18 @@ func TestStructUtility(t *testing.T) {
 			"isnode": voxgigstruct.IsNode,
 			"items":  voxgigstruct.Items,
 
-			"joinurl":   voxgigstruct.JoinUrl,
-			"jsonify":   voxgigstruct.Jsonify,
-			"keysof":    voxgigstruct.KeysOf,
-			"merge":     voxgigstruct.Merge,
-			"pad":       voxgigstruct.Pad,
-			"pathify":   voxgigstruct.Pathify,
+			"joinurl": voxgigstruct.JoinUrl,
+			"jsonify": voxgigstruct.Jsonify,
+			"keysof":  voxgigstruct.KeysOf,
+			"merge":   voxgigstruct.Merge,
+			"pad":     voxgigstruct.Pad,
+			"pathify": voxgigstruct.Pathify,
 
-			"select":    voxgigstruct.Select,
-			"setpath":   voxgigstruct.SetPath,
-			"size":      voxgigstruct.Size,
-			"slice":     voxgigstruct.Slice,
-			"setprop":   voxgigstruct.SetProp,
+			"select":  voxgigstruct.Select,
+			"setpath": voxgigstruct.SetPath,
+			"size":    voxgigstruct.Size,
+			"slice":   voxgigstruct.Slice,
+			"setprop": voxgigstruct.SetProp,
 
 			"strkey":    voxgigstruct.StrKey,
 			"stringify": voxgigstruct.Stringify,

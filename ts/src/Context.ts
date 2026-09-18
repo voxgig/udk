@@ -13,7 +13,6 @@ import { Result } from './Result'
 import { Spec } from './Spec'
 
 
-// TODO: move to own file
 class Context {
 
   id = 'C' + ('' + Math.random()).substring(2, 10)

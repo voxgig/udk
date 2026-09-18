@@ -30,7 +30,6 @@ function makeSpec(ctx: Context): Spec | Error {
 
   ctx.spec.method = prepareMethod(ctx)
 
-  // TODO: Add string utils to StructUtility
   if (!options.allow.method.includes(ctx.spec.method)) {
     return ctx.error('spec_method_allow', 'Method "' + ctx.spec.method +
       '" not allowed by SDK option allow.method value: "' + options.allow.method + '"')

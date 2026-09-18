@@ -1,10 +1,6 @@
 
 import { Context } from '../types'
 
-/* Convert entity data or match query into a srtucture suitable for use as request data.
- *
- * The operation (op) property `reqform` is used to perform the data preparation.
- */
 function transformRequest(ctx: Context) {
   const spec = ctx.spec
   const utility = ctx.utility

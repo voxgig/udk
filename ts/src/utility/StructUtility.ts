@@ -2,56 +2,6 @@
 
 // VERSION: @voxgig/struct 0.0.10
 
-/* Voxgig Struct
- * =============
- *
- * Utility functions to manipulate in-memory JSON-like data
- * structures. These structures assumed to be composed of nested
- * "nodes", where a node is a list or map, and has named or indexed
- * fields.  The general design principle is "by-example". Transform
- * specifications mirror the desired output.  This implementation is
- * designed for porting to multiple language, and to be tolerant of
- * undefined values.
- *
- * Main utilities
- * - getpath: get the value at a key path deep inside an object.
- * - merge: merge multiple nodes, overriding values in earlier nodes.
- * - walk: walk a node tree, applying a function at each node and leaf.
- * - inject: inject values from a data store into a new data structure.
- * - transform: transform a data structure to an example structure.
- * - validate: valiate a data structure against a shape specification.
- *
- * Minor utilities
- * - isnode, islist, ismap, iskey, isfunc: identify value kinds.
- * - isempty: undefined values, or empty nodes.
- * - keysof: sorted list of node keys (ascending).
- * - haskey: true if key value is defined.
- * - clone: create a copy of a JSON-like data structure.
- * - items: list entries of a map or list as [key, value] pairs.
- * - getprop: safely get a property value by key.
- * - setprop: safely set a property value by key.
- * - stringify: human-friendly string version of a value.
- * - escre: escape a regular expresion string.
- * - escurl: escape a url.
- * - join: join parts of a url, merging forward slashes.
- *
- * This set of functions and supporting utilities is designed to work
- * uniformly across many languages, meaning that some code that may be
- * functionally redundant in specific languages is still retained to
- * keep the code human comparable.
- *
- * NOTE: Lists are assumed to be mutable and reference stable.
- *
- * NOTE: In this code JSON nulls are in general *not* considered the
- * same as the undefined value in the given language. However most
- * JSON parsers do use the undefined value to represent JSON
- * null. This is ambiguous as JSON null is a separate value, not an
- * undefined value. You should convert such values to a special value
- * to represent JSON null, if this ambiguity creates issues
- * (thankfully in most APIs, JSON nulls are not used). For example,
- * the unit tests use the string "__NULL__" where necessary.
- *
- */
 
 
 // String constants are explicitly defined.
@@ -61,7 +11,6 @@ const M_KEYPRE = 1
 const M_KEYPOST = 2
 const M_VAL = 4
 
-// Special strings.
 const S_BKEY = '`$KEY`'
 const S_BANNO = '`$ANNO`'
 const S_BEXACT = '`$EXACT`'
@@ -72,7 +21,6 @@ const S_DTOP = '$TOP'
 const S_DERRS = '$ERRS'
 const S_DSPEC = '$SPEC'
 
-// General strings.
 const S_list = 'list'
 const S_base = 'base'
 const S_boolean = 'boolean'
@@ -92,7 +40,6 @@ const S_map = 'map'
 const S_scalar = 'scalar'
 const S_node = 'node'
 
-// Character strings.
 const S_BT = '`'
 const S_CN = ':'
 const S_CS = ']'
@@ -106,7 +53,6 @@ const S_SP = ' '
 const S_CM = ','
 const S_VIZ = ': '
 
-// Types
 let t = 31
 const T_any = (1 << t--) - 1
 const T_noval = 1 << t-- // Means property absent, undefined. Also NOT a scalar!
@@ -150,7 +96,6 @@ const TYPENAME = [
 // The standard undefined value for this language.
 const NONE = undefined
 
-// Private markers
 const SKIP = { '`$SKIP`': true }
 const DELETE = { '`$DELETE`': true }
 
@@ -162,9 +107,9 @@ const R_TRAILING_SLASH = /\/+$/                        // Trailing slashes in UR
 const R_LEADING_TRAILING_SLASH = /([^\/])\/+/          // Multiple slashes in URL middle.
 const R_LEADING_SLASH = /^\/+/                         // Leading slashes in URLs.
 const R_QUOTES = /"/g                                  // Double quotes for removal.
-const R_DOT = /\./g                                    // Dots in path strings.
+const R_DOT = /\./g
 const R_CLONE_REF = /^`\$REF:([0-9]+)`$/               // Copy reference in cloning.
-const R_META_PATH = /^([^$]+)\$([=~])(.+)$/            // Meta path syntax.
+const R_META_PATH = /^([^$]+)\$([=~])(.+)$/
 const R_DOUBLE_DOLLAR = /\$\$/g                        // Double dollar escape sequence.
 const R_TRANSFORM_NAME = /`\$([A-Z]+)`/g               // Transform command names.
 const R_INJECTION_FULL = /^`(\$[A-Z]+|[^`]*)[0-9]*`$/  // Full string injection pattern.
@@ -182,16 +127,13 @@ type PropKey = string | number
 type Indexable = { [key: string]: any } & { [key: number]: any }
 
 
-// For each key in a node (map or list), perform value injections in
-// three phases: on key value, before child, and then on key value again.
-// This mode is passed via the Injection structure.
 type InjectMode = number
 
 // Handle value injections using backtick escape sequences:
 // - `a.b.c`: insert value at {a:{b:{c:1}}}
 // - `$FOO`: apply transform FOO
 type Injector = (
-  inj: Injection,      // Injection state.
+  inj: Injection,
   val: any,            // Injection value specification.
   ref: string,         // Original injection reference string.
   store: any,          // Current source root value.
@@ -199,11 +141,11 @@ type Injector = (
 
 // Apply a custom modification to injections.
 type Modify = (
-  val: any,            // Value.
-  key?: PropKey,       // Value key, if any,
-  parent?: any,        // Parent node, if any.
+  val: any,
+  key?: PropKey,
+  parent?: any,
   inj?: Injection,     // Injection state, if any.
-  store?: any,         // Store, if any
+  store?: any,
 ) => void
 
 // Function applied to each node and leaf when walking a node structure depth first.
@@ -267,7 +209,6 @@ function isempty(val: any) {
 }
 
 
-// Value is a function.
 function isfunc(val: any): val is Function {
   return S_function === typeof val
 }
@@ -300,13 +241,6 @@ function size(val: any): number {
 }
 
 
-// Extract part of an array or string into a new value, from the start
-// point to the end point.  If no end is specified, extract to the
-// full length of the value. Negative arguments count from the end of
-// the value. For numbers, perform min and max bounding, where start
-// is inclusive, and end is *exclusive*.
-// NOTE: input lists are not mutated by default. Use the mutate
-// argument to mutate lists in place.
 function slice<V extends any>(val: V, start?: number, end?: number, mutate?: boolean): V {
   if (S_number === typeof val) {
     start = null == start || S_number !== typeof start ? Number.MIN_SAFE_INTEGER : start
@@ -379,7 +313,6 @@ function slice<V extends any>(val: V, start?: number, end?: number, mutate?: boo
 }
 
 
-// String padding.
 function pad(str: any, padding?: number, padchar?: string): string {
   str = S_string === typeof str ? str : stringify(str)
   padding = null == padding ? 44 : padding
@@ -553,11 +486,6 @@ function items(
 }
 
 
-// To replicate the array spread operator:
-// a=1, b=[2,3], c=[4,5]
-// [a,...b,c] -> [1,2,3,[4,5]]
-// flatten([a,b,[c]]) -> [1,2,3,[4,5]]
-// NOTE: [c] ensures c is not expanded
 function flatten(list: any[], depth?: number) {
   if (!islist(list)) {
     return list
@@ -582,12 +510,10 @@ function filter(val: any, check: (item: [string, any]) => boolean): any[] {
 
 // Escape regular expression.
 function escre(s: string) {
-  // s = null == s ? S_MT : s
   return replace(s, R_ESCAPE_REGEXP, '\\$&')
 }
 
 
-// Escape URLs.
 function escurl(s: string) {
   s = null == s ? S_MT : s
   return encodeURIComponent(s)
@@ -650,9 +576,6 @@ function join(arr: any[], sep?: string, url?: boolean) {
 }
 
 
-// Output JSON in a "standard" format, with 2 space indents, each property on a new line,
-// and spaces after {[: and before ]}. Any "wierd" values (NaN, etc) are output as null.
-// In general, the behaivor of of JavaScript's JSON.stringify(val,null,2) is followed.
 function jsonify(val: any, flags?: { indent?: number, offset?: number }) {
   let str = S_null
 
@@ -820,12 +743,6 @@ function jt(...v: any[]): any[] {
 }
 
 
-// Safely delete a property from an object or array element. 
-// Undefined arguments and invalid keys are ignored.
-// Returns the (possibly modified) parent.
-// For objects, the property is deleted using the delete operator.
-// For arrays, the element at the index is removed and remaining elements are shifted down.
-// NOTE: parent list may be new list, thus update references.
 function delprop<PARENT>(parent: PARENT, key: any): PARENT {
   if (!iskey(key)) {
     return parent
@@ -885,7 +802,6 @@ function setprop<PARENT>(parent: PARENT, key: any, val: any): PARENT {
 
     keyI = Math.floor(keyI)
 
-    // TODO: DELETE list element
 
     // Set or append value at position keyI, or append if keyI out of bounds.
     if (0 <= keyI) {
@@ -952,11 +868,9 @@ function walk(
 // override each other, and do *not* merge.  The first element is
 // modified.
 function merge(val: any, maxdepth?: number): any {
-  // const md: number = null == maxdepth ? MAXDEPTH : maxdepth < 0 ? 0 : maxdepth
   const md: number = slice(maxdepth ?? MAXDEPTH, 0)
   let out: any = NONE
 
-  // Handle edge cases.
   if (!islist(val)) {
     return val
   }
@@ -978,7 +892,6 @@ function merge(val: any, maxdepth?: number): any {
     let obj = list[oI]
 
     if (!isnode(obj)) {
-      // Nodes win.
       out = obj
     }
     else {
@@ -1022,7 +935,6 @@ function merge(val: any, maxdepth?: number): any {
             cur[pI] = tval
           }
 
-          // Override wins.
           else {
             cur[pI] = val
 
@@ -1057,7 +969,6 @@ function merge(val: any, maxdepth?: number): any {
 
       // Walk overriding node, creating paths in output as needed.
       out = walk(obj, before, after, maxdepth)
-      // console.log('WALK-DONE', out, obj)
     }
   }
 
@@ -1124,7 +1035,6 @@ function getpath(store: any, path: number | string | string[], injdef?: Partial<
     return NONE
   }
 
-  // let root = store
   let val = store
   const base = getprop(injdef, S_base)
   const src = getprop(store, base, store)
@@ -1137,7 +1047,6 @@ function getpath(store: any, path: number | string | string[], injdef?: Partial<
   }
   else if (0 < numparts) {
 
-    // Check for $ACTIONs
     if (1 === numparts) {
       val = getprop(store, parts[0])
     }
@@ -1172,7 +1081,6 @@ function getpath(store: any, path: number | string | string[], injdef?: Partial<
           part = stringify(getpath(getprop(injdef, 'meta'), slice(part, 6, -1)))
         }
 
-        // $$ escapes $
         part = part.replace(R_DOUBLE_DOLLAR, '$')
 
         if (S_MT === part) {
@@ -1192,7 +1100,6 @@ function getpath(store: any, path: number | string | string[], injdef?: Partial<
               val = dparent
             }
             else {
-              // const fullpath = slice(dpath, 0 - ascends).concat(parts.slice(pI + 1))
               const fullpath = flatten([slice(dpath, 0 - ascends), parts.slice(pI + 1)])
 
               if (ascends <= size(dpath)) {
@@ -1223,16 +1130,11 @@ function getpath(store: any, path: number | string | string[], injdef?: Partial<
     val = handler(injdef, val, ref, store)
   }
 
-  // console.log('GETPATH', path, val)
 
   return val
 }
 
 
-// Inject values from a data store into a node recursively, resolving
-// paths against the store, or current if they are local. The modify
-// argument allows custom modification of the result.  The inj
-// (Injection) argument is used to maintain recursive state.
 function inject(
   val: any,
   store: any,
@@ -1244,7 +1146,6 @@ function inject(
   // Create state if at root of injection.  The input value is placed
   // inside a virtual parent holder to simplify edge cases.
   if (NONE === injdef || null == injdef.mode) {
-    // Set up state assuming we are starting in the virtual parent.
     inj = new Injection(val, { [S_DTOP]: val })
     inj.dparent = store
     inj.errs = getprop(store, S_DERRS, [])
@@ -1263,13 +1164,8 @@ function inject(
   // console.log('INJ-START', val, inj.mode, inj.key, inj.val,
   //  't=', inj.path, 'P=', inj.parent, 'dp=', inj.dparent, 'ST=', store.$TOP)
 
-  // Descend into node.
   if (isnode(val)) {
 
-    // Keys are sorted alphanumerically to ensure determinism.
-    // Injection transforms ($FOO) are processed *after* other keys.
-    // NOTE: the optional digits suffix of the transform can thus be
-    // used to order the transforms.
 
     let nodekeys: any[]
     nodekeys = keysof(val)
@@ -1284,10 +1180,6 @@ function inject(
       nodekeys = keysof(val)
     }
 
-    // Each child key-value pair is processed in three injection phases:
-    // 1. inj.mode=M_KEYPRE - Key string is injected, returning a possibly altered key.
-    // 2. inj.mode=M_VAL - The child value is injected.
-    // 3. inj.mode=M_KEYPOST - Key string is injected again, allowing child mutation.
     for (let nkI = 0; nkI < nodekeys.length; nkI++) {
 
       const childinj = inj.child(nkI, nodekeys)
@@ -1334,7 +1226,6 @@ function inject(
     }
   }
 
-  // Custom modification.
   if (inj.modify && SKIP !== val) {
     let mkey = inj.key
     let mparent = inj.parent
@@ -1349,12 +1240,9 @@ function inject(
     )
   }
 
-  // console.log('INJ-VAL', val)
 
   inj.val = val
 
-  // Original val reference may no longer be correct.
-  // This return value is only used as the top level result.
   return getprop(inj.parent, S_DTOP)
 }
 
@@ -1400,8 +1288,6 @@ const transform_KEY: Injector = (inj: Injection) => {
     return getprop(inj.dparent, keyspec)
   }
 
-  // Key is defined within general purpose $META object.
-  // return getprop(getprop(parent, S_BANNO), S_KEY, getprop(path, path.length - 2))
   return getprop(getprop(parent, S_BANNO), S_KEY, getelem(path, -2))
 }
 
@@ -1440,8 +1326,6 @@ const transform_MERGE: Injector = (inj: Injection) => {
     // Remove the $MERGE command from a parent map.
     inj.setval(NONE)
 
-    // Literals in the parent have precedence, but we still merge onto
-    // the parent object, so that node tree references are not changed.
     const mergelist = flatten([[parent], args, [clone(parent)]])
 
     merge(mergelist)
@@ -1468,14 +1352,12 @@ const transform_EACH: Injector = (
   // Remove remaining keys to avoid spurious processing.
   slice(inj.keys, 0, 1, true)
 
-  // const [err, srcpath, child] = injectorArgs([T_string, T_any], inj)
   const [err, srcpath, child] = injectorArgs([T_string, T_any], slice(inj.parent, 1))
   if (NONE !== err) {
     inj.errs.push('$' + ijname + ': ' + err)
     return NONE
   }
 
-  // Source data.
   const srcstore = getprop(store, inj.base, store)
 
   const src = getpath(srcstore, srcpath, inj)
@@ -1511,7 +1393,6 @@ const transform_EACH: Injector = (
     const tpath = slice(inj.path, -1)
     const dpath = flatten([S_DTOP, srcpath.split(S_DT), '$:' + ckey])
 
-    // Parent structure.
     tcur = { [ckey]: tcur }
 
     if (1 < size(tpath)) {
@@ -1535,10 +1416,8 @@ const transform_EACH: Injector = (
     rval = tinj.val
   }
 
-  // _updateAncestors(inj, target, tkey, rval)
   setprop(target, tkey, rval)
 
-  // Prevent callee from damaging first list entry (since we are in `val` mode).
   return rval[0]
 }
 
@@ -1559,7 +1438,6 @@ const transform_PACK: Injector = (
     return NONE
   }
 
-  // Get arguments.
   const args = getprop(parent, key)
   const [err, srcpath, origchildspec] = injectorArgs([T_string, T_any], args)
   if (NONE !== err) {
@@ -1572,7 +1450,6 @@ const transform_PACK: Injector = (
   const pathsize = size(path)
   const target = getelem(nodes, pathsize - 2, () => getelem(nodes, pathsize - 1))
 
-  // Source data
   const srcstore = getprop(store, inj.base, store)
   let src = getpath(srcstore, srcpath, inj)
 
@@ -1593,7 +1470,6 @@ const transform_PACK: Injector = (
     return NONE
   }
 
-  // Get keypath.
   const keypath = getprop(origchildspec, S_BKEY)
   const childspec = delprop(origchildspec, S_BKEY)
 
@@ -1671,17 +1547,12 @@ const transform_PACK: Injector = (
     rval = tinj.val
   }
 
-  // _updateAncestors(inj, target, tkey, rval)
   setprop(target, tkey, rval)
 
-  // Drop transform key.
   return NONE
 }
 
 
-// TODO: not found ref should removed key (setprop NONE)
-// Reference original spec (enables recursice transformations)
-// Format: ['`$REF`', '`spec-path`']
 const transform_REF: Injector = (
   inj: Injection,
   val: any,
@@ -1698,13 +1569,10 @@ const transform_REF: Injector = (
   const refpath = getprop(inj.parent, 1)
   inj.keyI = size(inj.keys)
 
-  // Spec reference.
   const spec = getprop(store, S_DSPEC)()
 
   const dpath = slice(inj.path, 1)
   const ref = getpath(spec, refpath, {
-    // TODO: test relative refs
-    // dpath: inj.path.slice(1),
     dpath,
     // dparent: getpath(spec, inj.path.slice(1))
     dparent: getpath(spec, dpath),
@@ -1763,7 +1631,6 @@ const transform_FORMAT: Injector = (
   _ref: string,
   store: any
 ) => {
-  // console.log('FORMAT-START', inj, _val)
 
   // Remove remaining keys to avoid spurious processing.
   slice(inj.keys, 0, 1, true)
@@ -1772,12 +1639,9 @@ const transform_FORMAT: Injector = (
     return NONE
   }
 
-  // Get arguments: ['`$FORMAT`', 'name', child].
-  // TODO: EACH and PACK should accept customm functions too
   const name = getprop(inj.parent, 1)
   const child = getprop(inj.parent, 2)
 
-  // Source data.
   const tkey = getelem(inj.path, -2)
   const target = getelem(inj.nodes, - 2, () => getelem(inj.nodes, -1))
 
@@ -1794,7 +1658,6 @@ const transform_FORMAT: Injector = (
   let out = walk(resolved, formatter)
 
   setprop(target, tkey, out)
-  // _updateAncestors(inj, target, tkey, out)
 
   return out
 }
@@ -1847,7 +1710,6 @@ const transform_APPLY: Injector = (
     return NONE
   }
 
-  // const [err, apply, child] = injectorArgs([T_function, T_any], inj)
   const [err, apply, child] = injectorArgs([T_function, T_any], slice(inj.parent, 1))
   if (NONE !== err) {
     inj.errs.push('$' + ijname + ': ' + err)
@@ -1986,7 +1848,6 @@ const validate_TYPE: Injector = (inj: Injection, _val: any, ref: string) => {
 }
 
 
-// Allow any value.
 const validate_ANY: Injector = (inj: Injection) => {
   let out = getprop(inj.dparent, inj.key)
   return out
@@ -2002,7 +1863,6 @@ const validate_CHILD: Injector = (inj: Injection) => {
 
   // Setup data structures for validation by cloning child template.
 
-  // Map syntax.
   if (M_KEYPRE === mode) {
     const childtm = getprop(parent, key)
 
@@ -2032,7 +1892,6 @@ const validate_CHILD: Injector = (inj: Injection) => {
     return NONE
   }
 
-  // List syntax.
   if (M_VAL === mode) {
 
     if (!islist(parent)) {
@@ -2044,8 +1903,6 @@ const validate_CHILD: Injector = (inj: Injection) => {
     const childtm = getprop(parent, 1)
 
     if (NONE === inj.dparent) {
-      // Empty list as default.
-      // parent.length = 0
       slice(parent, 0, 0, true)
       return NONE
     }
@@ -2073,11 +1930,6 @@ const validate_CHILD: Injector = (inj: Injection) => {
 }
 
 
-// TODO: implement SOME, ALL
-// FIX: ONE should mean exactly one, not at least one (=SOME)
-// TODO: implement a generate validate_ALT to do all of these
-// Match at least one of the specified shapes.
-// Syntax: ['`$ONE`', alt0, alt1, ...]
 const validate_ONE: Injector = (
   inj: Injection,
   _val: any,
@@ -2111,7 +1963,6 @@ const validate_ONE: Injector = (
       return
     }
 
-    // See if we can find a match.
     for (let tval of tvals) {
 
       // If match, then errs.length = 0
@@ -2134,7 +1985,6 @@ const validate_ONE: Injector = (
       }
     }
 
-    // There was no match.
     const valdesc =
       replace(join(items(tvals, (n) => stringify(n[1])), ', '),
         R_TRANSFORM_NAME, (_m: any, p1: string) => p1.toLowerCase())
@@ -2164,7 +2014,6 @@ const validate_EXACT: Injector = (inj: Injection) => {
     // Clean up structure, replacing [$EXACT, ...] with current data parent
     inj.setval(inj.dparent, 2)
 
-    // inj.path = slice(inj.path, 0, size(inj.path) - 1)
     inj.path = slice(inj.path, 0, -1)
     inj.key = getelem(inj.path, -1)
 
@@ -2176,7 +2025,6 @@ const validate_EXACT: Injector = (inj: Injection) => {
       return
     }
 
-    // See if we can find an exact value match.
     let currentstr: string | undefined = undefined
     for (let tval of tvals) {
       let exactmatch = tval === inj.dparent
@@ -2192,7 +2040,6 @@ const validate_EXACT: Injector = (inj: Injection) => {
       }
     }
 
-    // There was no match.
     const valdesc =
       replace(join(items(tvals, (n) => stringify(n[1])), ', '),
         R_TRANSFORM_NAME, (_m: any, p1: string) => p1.toLowerCase())
@@ -2245,7 +2092,6 @@ const _validation: Modify = (
 
   const ctype = typify(cval)
 
-  // Type mismatch.
   if (ptype !== ctype && NONE !== pval) {
     inj.errs.push(_invalidTypeMsg(inj.path, typename(ptype), ctype, cval, 'V0010'))
     return
@@ -2306,16 +2152,6 @@ const _validation: Modify = (
 
 
 
-// Validate a data structure against a shape specification.  The shape
-// specification follows the "by example" principle.  Plain data in
-// teh shape is treated as default values that also specify the
-// required type.  Thus shape {a:1} validates {a:2}, since the types
-// (number) match, but not {a:'A'}.  Shape {a;1} against data {}
-// returns {a:1} as a=1 is the default value of the a key.  Special
-// validation commands (in the same syntax as transform ) are also
-// provided to specify required values.  Thus shape {a:'`$STRING`'}
-// validates {a:'A'} but not {a:1}. Empty map or list means the node
-// is open, and if missing an empty default is inserted.
 function validate(
   data: any, // Source data to transform into new data (original not mutated)
   spec: any, // Transform specification; output follows this shape
@@ -2482,10 +2318,8 @@ const select_NOT: Injector = (inj: Injection, _val: any, _ref: string, store: an
 const select_CMP: Injector = (inj: Injection, _val: any, ref: string, store: any) => {
   if (M_KEYPRE === inj.mode) {
     const term = getprop(inj.parent, inj.key)
-    // const src = getprop(store, inj.base, store)
     const gkey = getelem(inj.path, -2)
 
-    // const tval = getprop(src, gkey)
 
     const ppath = slice(inj.path, -1)
     const point = getpath(store, ppath)
@@ -2523,10 +2357,6 @@ const select_CMP: Injector = (inj: Injection, _val: any, ref: string, store: any
 }
 
 
-// Select children from a top-level object that match a MongoDB-style query.
-// Supports $and, $or, and equality comparisons.
-// For arrays, children are elements; for objects, children are values.
-// TODO: swap arg order for consistency
 function select(children: any, query: any): any[] {
   if (!isnode(children)) {
     return []
@@ -2586,14 +2416,14 @@ class Injection {
   mode: InjectMode          // Injection mode: M_KEYPRE, M_VAL, M_KEYPOST.
   full: boolean             // Transform escape was full key name.
   keyI: number              // Index of parent key in list of parent keys.
-  keys: string[]            // List of parent keys.
-  key: string               // Current parent key.
-  val: any                  // Current child value.
+  keys: string[]
+  key: string
+  val: any
   parent: any               // Current parent (in transform specification).
-  path: string[]            // Path to current node.
+  path: string[]
   nodes: any[]              // Stack of ancestor nodes.
   handler: Injector         // Custom handler for injections.
-  errs: any[]               // Error collector.  
+  errs: any[]
   meta: Record<string, any> // Custom meta data. NOTE: do not merge, values must remain as-is.
   dparent: any              // Current data parent node (contains current data value).
   dpath: string[]           // Current data value path
@@ -2663,7 +2493,6 @@ class Injection {
       }
     }
 
-    // TODO: is this needed?
     return this.dparent
   }
 
@@ -2710,7 +2539,6 @@ class Injection {
         setprop(aval, akey, val)
     }
 
-    // console.log('SETVAL', val, this.key, this.parent)
     return parent
   }
 }
@@ -2720,11 +2548,6 @@ class Injection {
 // ==================
 
 
-// // Update all references to target in inj.nodes.
-// function _updateAncestors(_inj: Injection, target: any, tkey: any, tval: any) {
-//   // SetProp is sufficient in TypeScript as target reference remains consistent even for lists.
-//   setprop(target, tkey, tval)
-// }
 
 
 // Build a type validation error message.
@@ -2754,8 +2577,6 @@ const _injecthandler: Injector = (
   let out = val
   const iscmd = isfunc(val) && (NONE === ref || ref.startsWith(S_DS))
 
-  // Only call val function if it is a special command ($NAME format).
-  // TODO: OR if meta.'$CALL'
 
   if (iscmd) {
     out = (val as Injector)(inj, val, ref, store)
@@ -2800,15 +2621,6 @@ const _validatehandler: Injector = (
 }
 
 
-// Inject values from a data store into a string. Not a public utility - used by
-// `inject`.  Inject are marked with `path` where path is resolved
-// with getpath against the store or current (if defined)
-// arguments. See `getpath`.  Custom injection handling can be
-// provided by inj.handler (this is used for transform functions).
-// The path can also have the special syntax $NAME999 where NAME is
-// upper case letters only, and 999 is any digits, which are
-// discarded. This syntax specifies the name of a transform, and
-// optionally allows transforms to be ordered by alphanumeric sorting.
 function _injectstr(
   val: string,
   store: any,
@@ -2821,7 +2633,6 @@ function _injectstr(
 
   let out: any = val
 
-  // Pattern examples: "`a.b.c`", "`$NAME`", "`$NAME1`"
   const m = val.match(R_INJECTION_FULL)
 
   // Full string of the val is an injection.
@@ -2915,13 +2726,11 @@ function checkPlacement(
 }
 
 
-// function injectorArgs(argTypes: number[], inj: Injection): any {
 function injectorArgs(argTypes: number[], args: any[]): any {
   const numargs = size(argTypes)
   const found = new Array(1 + numargs)
   found[0] = NONE
   for (let argI = 0; argI < numargs; argI++) {
-    // const arg = inj.parent[1 + argI]
     const arg = args[argI]
     const argType = typify(arg)
     if (0 === (argTypes[argI] & argType)) {
@@ -2953,7 +2762,6 @@ function injectChild(child: any, store: any, inj: Injection): Injection {
     }
   }
 
-  // console.log('FORMAT-INJECT-CHILD', child)
   inject(child, store, cinj)
 
   return cinj

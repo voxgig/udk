@@ -1,10 +1,4 @@
 "use strict";
-/**
- * Shared utility functions for unit tests
- *
- * This module provides common helper functions used across unit tests
- * for creating test data, transformations, validations, and environment overrides.
- */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.makeStepData = makeStepData;
 exports.makeMatch = makeMatch;

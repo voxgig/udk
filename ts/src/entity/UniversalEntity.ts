@@ -16,7 +16,6 @@ import type {
 } from '../types'
 
 
-// TODO: needs Entity superclass
 class UniversalEntity {
   name: string
 
@@ -29,7 +28,6 @@ class UniversalEntity {
   _entctx: Context
 
   constructor(client: UniversalSDK, name: string, entopts: any) {
-    // super()
 
     this.name = name
 
