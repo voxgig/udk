@@ -23,9 +23,6 @@ function makeError(ctx: Context, err?: any) {
   err = err || ctx.error('unknown', 'unknown error')
 
   const errmsg = err.message || 'unknown error'
-  // TODO: project name should come from config
-  // avoids spurious changes between template and generated utility
-  // applies for all utility files
   const msg = 'UniversalSDK: ' + op.name + ': ' + errmsg
   err.message = clean(ctx, msg)
 
@@ -48,7 +45,6 @@ function makeError(ctx: Context, err?: any) {
 
   ctx.ctrl.err = err
 
-  // TODO: model option to return instead
   if (false === ctx.ctrl.throw) {
     return result.resdata
   }

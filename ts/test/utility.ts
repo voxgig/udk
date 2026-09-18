@@ -1,9 +1,3 @@
-/**
- * Shared utility functions for unit tests
- * 
- * This module provides common helper functions used across unit tests
- * for creating test data, transformations, validations, and environment overrides.
- */
 
 // Creates a new step data structure within the data model
 function makeStepData(dm: Record<string, any>, stepname: string): Record<string, any> {

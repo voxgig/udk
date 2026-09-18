@@ -533,7 +533,6 @@ const { equal, deepEqual } = node_assert_1.default;
         const extra = {
             $INTEGER: (inj) => {
                 const { key } = inj;
-                // let out = getprop(current, key)
                 let out = struct.getprop(inj.dparent, key);
                 let t = typeof out;
                 if ('number' !== t && !Number.isInteger(out)) {

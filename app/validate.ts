@@ -190,7 +190,6 @@ async function main() {
     console.log(`   Created: ${moon.name}`)
   })
 
-  // Test 12: Verify Earth has 2 moons
   await test('12. Verify Earth has 2 moons', async () => {
     const res = await fetch(`${BASE_URL}/api/planet/earth/moon`)
     assert(res.ok, `Expected 200, got ${res.status}`)

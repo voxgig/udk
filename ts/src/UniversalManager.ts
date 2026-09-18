@@ -28,7 +28,6 @@ class UniversalManager {
 
   constructor(options: Partial<UniversalOptions>) {
 
-    // TODO: validation
     this._options = options as UniversalOptions
 
   }
@@ -55,7 +54,6 @@ class UniversalManager {
     const modelpath = Path.join(this._options.registry, 'local', ref + '.json')
     const modelsrc = Fs.readFileSync(modelpath).toString()
     const model = JSON.parse(modelsrc)
-    // console.log('resolveModel', modelpath, model)
     return model
   }
 

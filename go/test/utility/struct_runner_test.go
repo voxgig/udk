@@ -39,36 +39,36 @@ type StructUtility struct {
 	Stringify  func(val any, maxlen ...int) string
 	Walk       func(val any, apply voxgigstruct.WalkApply, opts ...any) any
 
-	DelProp    func(parent any, key any) any
-	EscRe      func(s string) string
-	EscUrl     func(s string) string
-	Filter     func(val any, check func([2]any) bool) []any
-	Flatten    func(list any, depths ...int) any
-	GetDef     func(val any, alt any) any
-	GetElem    func(val any, key any, alts ...any) any
-	GetProp    func(val any, key any, alts ...any) any
-	HasKey     func(val any, key any) bool
-	IsEmpty    func(val any) bool
-	IsFunc     func(val any) bool
-	IsKey      func(val any) bool
-	IsList     func(val any) bool
-	IsMap      func(val any) bool
-	Join       func(arr []any, args ...any) string
-	Jsonify    func(val any, flags ...map[string]any) string
-	KeysOf     func(val any) []string
-	Merge      func(val any, maxdepths ...int) any
-	Pad        func(str any, args ...any) string
-	Pathify    func(val any, from ...int) string
-	Select     func(children any, query any) []any
-	SetPath    func(store any, path any, val any, injdefs ...map[string]any) any
-	SetProp    func(parent any, key any, newval any) any
-	Size       func(val any) int
-	Slice      func(val any, args ...any) any
-	StrKey     func(key any) string
-	Transform  func(data any, spec any, injdefs ...*voxgigstruct.Injection) any
-	Typify     func(value any) int
-	Typename   func(t int) string
-	Validate   func(data any, spec any, injdefs ...*voxgigstruct.Injection) (any, error)
+	DelProp   func(parent any, key any) any
+	EscRe     func(s string) string
+	EscUrl    func(s string) string
+	Filter    func(val any, check func([2]any) bool) []any
+	Flatten   func(list any, depths ...int) any
+	GetDef    func(val any, alt any) any
+	GetElem   func(val any, key any, alts ...any) any
+	GetProp   func(val any, key any, alts ...any) any
+	HasKey    func(val any, key any) bool
+	IsEmpty   func(val any) bool
+	IsFunc    func(val any) bool
+	IsKey     func(val any) bool
+	IsList    func(val any) bool
+	IsMap     func(val any) bool
+	Join      func(arr []any, args ...any) string
+	Jsonify   func(val any, flags ...map[string]any) string
+	KeysOf    func(val any) []string
+	Merge     func(val any, maxdepths ...int) any
+	Pad       func(str any, args ...any) string
+	Pathify   func(val any, from ...int) string
+	Select    func(children any, query any) []any
+	SetPath   func(store any, path any, val any, injdefs ...map[string]any) any
+	SetProp   func(parent any, key any, newval any) any
+	Size      func(val any) int
+	Slice     func(val any, args ...any) any
+	StrKey    func(key any) string
+	Transform func(data any, spec any, injdefs ...*voxgigstruct.Injection) any
+	Typify    func(value any) int
+	Typename  func(t int) string
+	Validate  func(data any, spec any, injdefs ...*voxgigstruct.Injection) (any, error)
 
 	SKIP   any
 	DELETE any
@@ -117,7 +117,6 @@ var (
 	EXISTSMARK = "__EXISTS__"
 )
 
-// MakeRunner creates a runner function that can be used to run tests
 func MakeRunner(testfile string, client StructClient) func(name string, store any) (*RunPack, error) {
 
 	return func(name string, store any) (*RunPack, error) {
@@ -254,7 +253,6 @@ func resolveSpec(
 
 	var spec map[string]any
 
-	// Check if there's a "primary" key that is a map, and if it has our 'name'
 	if primaryRaw, hasPrimary := alltests["primary"]; hasPrimary {
 		if primaryMap, ok := primaryRaw.(map[string]any); ok {
 			if found, ok := primaryMap[name]; ok {
@@ -342,7 +340,6 @@ func resolveClients(
 			return nil, err
 		}
 
-		// Get the new client instance
 		newClientValue := results[0].Interface()
 		newClient, ok := newClientValue.(StructClient)
 		if !ok {
@@ -777,7 +774,6 @@ func subjectify(fn any) Subject {
 			} else {
 				val := reflect.ValueOf(arg)
 
-				// Check compatibility so we don't panic on invalid type
 				if !val.Type().AssignableTo(paramType) {
 					return nil, fmt.Errorf(
 						"subjectify: argument %d type %T not assignable to parameter type %s",
@@ -1024,36 +1020,36 @@ func NewStructSDK(opts map[string]any) *StructSDK {
 		Stringify:  voxgigstruct.Stringify,
 		Walk:       voxgigstruct.Walk,
 
-		DelProp:    voxgigstruct.DelProp,
-		EscRe:      voxgigstruct.EscRe,
-		EscUrl:     voxgigstruct.EscUrl,
-		Filter:     voxgigstruct.Filter,
-		Flatten:    voxgigstruct.Flatten,
-		GetDef:     voxgigstruct.GetDef,
-		GetElem:    voxgigstruct.GetElem,
-		GetProp:    voxgigstruct.GetProp,
-		HasKey:     voxgigstruct.HasKey,
-		IsEmpty:    voxgigstruct.IsEmpty,
-		IsFunc:     voxgigstruct.IsFunc,
-		IsKey:      voxgigstruct.IsKey,
-		IsList:     voxgigstruct.IsList,
-		IsMap:      voxgigstruct.IsMap,
-		Join:       voxgigstruct.Join,
-		Jsonify:    voxgigstruct.Jsonify,
-		KeysOf:     voxgigstruct.KeysOf,
-		Merge:      voxgigstruct.Merge,
-		Pad:        voxgigstruct.Pad,
-		Pathify:    voxgigstruct.Pathify,
-		Select:     voxgigstruct.Select,
-		SetPath:    voxgigstruct.SetPath,
-		SetProp:    voxgigstruct.SetProp,
-		Size:       voxgigstruct.Size,
-		Slice:      voxgigstruct.Slice,
-		StrKey:     voxgigstruct.StrKey,
-		Transform:  voxgigstruct.Transform,
-		Typify:     voxgigstruct.Typify,
-		Typename:   voxgigstruct.Typename,
-		Validate:   voxgigstruct.Validate,
+		DelProp:   voxgigstruct.DelProp,
+		EscRe:     voxgigstruct.EscRe,
+		EscUrl:    voxgigstruct.EscUrl,
+		Filter:    voxgigstruct.Filter,
+		Flatten:   voxgigstruct.Flatten,
+		GetDef:    voxgigstruct.GetDef,
+		GetElem:   voxgigstruct.GetElem,
+		GetProp:   voxgigstruct.GetProp,
+		HasKey:    voxgigstruct.HasKey,
+		IsEmpty:   voxgigstruct.IsEmpty,
+		IsFunc:    voxgigstruct.IsFunc,
+		IsKey:     voxgigstruct.IsKey,
+		IsList:    voxgigstruct.IsList,
+		IsMap:     voxgigstruct.IsMap,
+		Join:      voxgigstruct.Join,
+		Jsonify:   voxgigstruct.Jsonify,
+		KeysOf:    voxgigstruct.KeysOf,
+		Merge:     voxgigstruct.Merge,
+		Pad:       voxgigstruct.Pad,
+		Pathify:   voxgigstruct.Pathify,
+		Select:    voxgigstruct.Select,
+		SetPath:   voxgigstruct.SetPath,
+		SetProp:   voxgigstruct.SetProp,
+		Size:      voxgigstruct.Size,
+		Slice:     voxgigstruct.Slice,
+		StrKey:    voxgigstruct.StrKey,
+		Transform: voxgigstruct.Transform,
+		Typify:    voxgigstruct.Typify,
+		Typename:  voxgigstruct.Typename,
+		Validate:  voxgigstruct.Validate,
 
 		SKIP:   voxgigstruct.SKIP,
 		DELETE: voxgigstruct.DELETE,

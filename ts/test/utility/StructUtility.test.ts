@@ -795,7 +795,6 @@ describe('struct', async () => {
     const extra = {
       $INTEGER: (inj: any) => {
         const { key } = inj
-        // let out = getprop(current, key)
         let out = struct.getprop(inj.dparent, key)
 
         let t = typeof out

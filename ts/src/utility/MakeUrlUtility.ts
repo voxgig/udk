@@ -23,7 +23,6 @@ function makeUrl(ctx: Context): Error | string {
   }
 
 
-  // TODO: use parts to avoid regexp?
   let url = join([spec.base, spec.prefix, spec.path, spec.suffix], '/', true)
   let resmatch: Record<string, any> = {}
 
@@ -37,18 +36,6 @@ function makeUrl(ctx: Context): Error | string {
   }
 
 
-  /* TODO: fix
-  let qsep = '?'
-  for (let [key, val] of items(spec.query)) {
-    if (null == spec.alias[key]) {
-      if (null != val) {
-        url += qsep + escurl(key) + '=' + escurl(val)
-        qsep = '&'
-        resmatch[key] = val
-      }
-    }
-  }
-  */
 
   result.resmatch = resmatch
 
